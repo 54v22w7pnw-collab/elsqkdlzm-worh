@@ -1,6 +1,14 @@
 {
-  "SOLD OUT": {
-    "price": "가격 정보 없음",
-    "sold_out": false
+  "DCA084 브레이크 패드": {
+    "price": "21,000원",
+    "sold_out": true
+  },
+  "DCA585 브레이크 패드": {
+    "price": "21,000원",
+    "sold_out": true
+  },
+  "PR1400 OXiC 전용 브레이크 패드": {
+    "price": "40,000원",
+    "sold_out": true
   }
 }
