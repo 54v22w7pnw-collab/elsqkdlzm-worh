@@ -6,9 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
-CATEGORY_URLS = [
-    "https://mbscorp.co.kr/prod/prod_list.html?s_base_category_seq=MTY=&s_base_category_h=NDU="
-]
+BASE_SITE_URL = "https://mbscorp.co.kr/"
 NTFY_TOPIC = "elsqkdlzm-worh26"
 STATE_FILE = "state.json"
 
@@ -72,9 +70,30 @@ def extract_price(soup):
 
     return "가격 정보 없음"
 
+def get_all_category_urls():
+    """사이트 메인 및 메뉴에서 모든 카테고리 URL을 자동으로 수집합니다."""
+    category_urls = set()
+    try:
+        res = requests.get(BASE_SITE_URL, headers=HEADERS, timeout=10)
+        if res.status_code == 200:
+            soup = BeautifulSoup(res.content, "html.parser")
+            for a_tag in soup.find_all("a", href=True):
+                href = a_tag["href"]
+                if "prod_list.html" in href:
+                    full_url = urljoin(BASE_SITE_URL, href)
+                    category_urls.add(full_url)
+        print(f"📂 자동으로 발견된 카테고리 수: {len(category_urls)}개")
+    except Exception as e:
+        print(f"⚠️ 카테고리 자동 수집 실패: {e}")
+    
+    return list(category_urls)
+
 def get_product_links():
+    """모든 카테고리를 돌며 개별 상품 링크를 수집합니다."""
+    category_urls = get_all_category_urls()
     product_links = set()
-    for cat_url in CATEGORY_URLS:
+
+    for cat_url in category_urls:
         try:
             res = requests.get(cat_url, headers=HEADERS, timeout=10)
             if res.status_code != 200:
@@ -85,8 +104,10 @@ def get_product_links():
                 if "prod_detail.html" in href:
                     full_url = urljoin(cat_url, href)
                     product_links.add(full_url)
+            time.sleep(0.2)
         except Exception as e:
-            print(f"⚠️ 카테고리 로딩 중 오류: {e}")
+            print(f"⚠️ 카테고리 읽기 오류 ({cat_url}): {e}")
+
     return list(product_links)
 
 def check_all_products():
@@ -99,7 +120,7 @@ def check_all_products():
     is_daily_price_check = (TODAY_STR != last_price_date) and not is_first_run
 
     product_urls = get_product_links()
-    print(f"🔍 총 {len(product_urls)}개 부품 상태 검사 중... (기준 날짜: {TODAY_STR})")
+    print(f"🔍 전체 쇼핑몰 총 {len(product_urls)}개 부품 상태 검사 시작... (기준 날짜: {TODAY_STR})")
 
     current_products = {}
     stock_changes = []
@@ -193,7 +214,7 @@ def check_all_products():
     if is_first_run:
         send_ntfy(
             "🔔 [모니터링 시스템 개설]",
-            f"총 {len(current_products)}개 부품 상태 등록 완료!\n• 재입고/품절: 30분마다 변동 시 통합 알림\n• 가격 변동: 1일 1회 통합 알림"
+            f"전체 쇼핑몰 총 {len(current_products)}개 부품 상태 등록 완료!\n• 재입고/품절: 30분마다 변동 시 통합 알림\n• 가격 변동: 1일 1회 통합 알림"
         )
         return
 
@@ -226,6 +247,6 @@ def check_all_products():
             print("ℹ️ [1일 1회] 오늘 가격 변동 없음")
 
 if __name__ == "__main__":
-    print("🚀 모니터링 실행...")
+    print("🚀 전체 쇼핑몰 모니터링 실행...")
     check_all_products()
     print("✨ 검사 완료.")
