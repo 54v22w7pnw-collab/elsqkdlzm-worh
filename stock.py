@@ -174,9 +174,8 @@ def main():
         except Exception as e:
             print(f"⚠️ state.json 읽기 에러: {e}")
 
-    has_false_positive = any(item.get("sold_out") for item in previous_data.values()) if previous_data else False
-
-    if not previous_data or has_false_positive:
+    # state.json 파일이 아예 없을 때만 초기 등록 진행
+    if not previous_data:
         print("🎉 전체 카테고리 데이터 통합 초기 등록 중...")
         with open(state_file, "w", encoding="utf-8") as f:
             json.dump(current_data, f, ensure_ascii=False, indent=2)
@@ -187,6 +186,7 @@ def main():
         )
         return
 
+    # 실시간 데이터 변동 비교 로직
     changes = []
     for name, info in current_data.items():
         if name in previous_data:
