@@ -2,11 +2,10 @@ name: MBS Stock Monitor
 
 on:
   schedule:
-    # 매 3시간마다 자동 실행
+    # 매 3시간마다 실행
     - cron: '0 */3 * * *'
-  workflow_dispatch: # 수동 실행 버튼
+  workflow_dispatch:
 
-# 🔐 쓰기 권한 명시 (권한 에러 방지)
 permissions:
   contents: write
 
@@ -14,10 +13,10 @@ jobs:
   check-stock:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
@@ -33,5 +32,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add state.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update state" && git push)
+          if [ -f state.json ]; then
+            git add state.json
+            git diff --quiet && git diff --staged --quiet || (git commit -m "Update state" && git push)
+          fi
