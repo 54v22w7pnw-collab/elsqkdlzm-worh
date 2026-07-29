@@ -3,18 +3,19 @@ from bs4 import BeautifulSoup
 import json
 import os
 import time
+import re
 
-# 알림 토픽 설정
+# 알림 토픽 및 쇼핑몰 공식 URL 설정
 NTFY_TOPIC = "worhghkrdls-26"
 NTFY_URL = f"https://ntfy.sh/{NTFY_TOPIC}"
-BASE_URL = "https://www.mbscorporation.com"
+BASE_URL = "https://mbscorp.co.kr"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 }
 
 def send_notification(title, message, priority="default"):
-    """ntfy.sh로 푸시 알림 전송"""
+    """ntfy.sh 푸시 알림 전송"""
     try:
         requests.post(
             NTFY_URL,
@@ -30,113 +31,92 @@ def send_notification(title, message, priority="default"):
         print(f"⚠️ 알림 전송 실패: {e}")
 
 def safe_get(url, timeout=7):
-    """타임아웃 적용 및 오류 발생 시 건너뛰는 안전한 GET 요청"""
+    """안전한 HTTP GET 요청"""
     try:
-        res = requests.get(url, headers=HEADERS, timeout=timeout, allow_redirects=True)
+        res = requests.get(url, headers=HEADERS, timeout=timeout)
         if res.status_code == 200:
             return res
     except Exception as e:
-        print(f"⚠️ 접속 실패 (건너븀): {url} - {e}")
+        print(f"⚠️ 접속 실패: {url} - {e}")
     return None
 
-def get_all_category_urls():
-    """메인 페이지에서 카테고리 URL 추출"""
-    res = safe_get(BASE_URL)
-    if not res:
-        res = safe_get("http://www.mbscorporation.com")
-    if not res:
-        return []
-    
-    soup = BeautifulSoup(res.text, 'html.parser')
-    category_urls = set()
-    
-    for a in soup.find_all('a', href=True):
-        href = a['href']
-        if any(k in href for k in ['goods_list.php', 'category', 'cateCd', 'code']):
-            if not href.startswith('http'):
-                href = f"https://www.mbscorporation.com/{href.lstrip('/')}"
-            category_urls.add(href)
-            
-    return list(category_urls)
-
 def scrape_current_products():
-    """모든 상품 상태 수집 (쇼핑몰 태그 다양화)"""
+    """mbscorp.co.kr 전용 상품 및 재고 수집 로직"""
     products = {}
-    visited_urls = set()
-    category_urls = get_all_category_urls()
     
-    if not category_urls:
-        category_urls = ["https://www.mbscorporation.com/goods/goods_list.php"]
-
-    print(f"🔍 총 {len(category_urls)}개 카테고리 URL 탐색 시작...")
-
-    for cat_url in category_urls:
-        if cat_url in visited_urls:
-            continue
-        visited_urls.add(cat_url)
-
-        res = safe_get(cat_url)
+    print("🔍 MBS Corporation(mbscorp.co.kr) 상품 데이터 수집 시작...")
+    
+    empty_page_count = 0
+    # 전체 상품 목록 페이지 순회 (page=1 ~ page=45)
+    for p in range(1, 45):
+        url = f"{BASE_URL}/mobile/prod/prod_list.html?page={p}"
+        res = safe_get(url)
         if not res:
             continue
 
         soup = BeautifulSoup(res.text, 'html.parser')
         
-        # 상품을 담고 있는 다양한 HTML 상자 태그 검색
-        items = soup.select(
-            '.item_cont, .item_box, .goods_list_item, .goods_spec, '
-            'li.goods_spec, div.goods_list_cont, .item_gallery_type li, '
-            '.item_basket_type li, .goods_item, tr.goods_item, div.item, li.item'
-        )
+        # 상품 상세 페이지 링크(prod_detail.html)를 포함하는 요소 탐색
+        items = soup.find_all('a', href=lambda h: h and 'prod_detail.html' in h)
         
-        count_in_page = 0
+        page_items = 0
         for item in items:
             try:
-                # 상품명 찾기
-                name_elem = item.select_one(
-                    '.item_name, .goods_name, .name, .prd_name, '
-                    '.item_tit, strong.name, .item_name_txt, a.item_name, .goods_txt'
-                )
-                # 가격 찾기
-                price_elem = item.select_one(
-                    '.item_price, .goods_price, .price, .prd_price, '
-                    'strong.price, .item_money_box, .price_txt'
-                )
-                # 품절 마크 찾기
-                soldout_elem = item.select_one(
-                    '.soldout, .icon_soldout, .out_of_stock, img[src*="soldout"], .sold_out'
-                )
-                
-                if name_elem:
-                    name = " ".join(name_elem.text.split())
-                    if not name or len(name) < 2:
-                        continue
+                raw_text = " ".join(item.text.split())
+                if not raw_text or len(raw_text) < 2:
+                    continue
 
-                    price = " ".join(price_elem.text.split()) if price_elem else "가격 정보 없음"
-                    
-                    item_text = item.text.lower()
-                    is_sold_out = True if (soldout_elem or "품절" in item_text or "out of stock" in item_text) else False
-                    
+                # 품절 여부 확인
+                is_sold_out = "품절" in raw_text or "out of stock" in raw_text.lower()
+
+                # 가격 추출 (예: 정찰가 45,000원 또는 45,000원)
+                price_match = re.search(r'(정찰가\s*[\d,]+원|[\d,]+\s*원)', raw_text)
+                if price_match:
+                    price = price_match.group(0)
+                else:
+                    price = "가격 정보 없음"
+
+                # 상품명 정제 (가격 및 불필요 키워드 제거)
+                name = raw_text
+                for word in ["스펙비교", "NEW.", "NEW", "[품절]", "품절", "추천순", "인기순", "최신순"]:
+                    name = name.replace(word, "")
+                if price_match:
+                    name = name.replace(price_match.group(0), "")
+                
+                name = " ".join(name.split()).strip()
+
+                # 유효한 상품명인 경우 저장
+                if name and len(name) >= 2 and name not in ["로그인", "장바구니", "마이페이지", "1:1문의"]:
                     products[name] = {
                         "price": price,
                         "sold_out": is_sold_out
                     }
-                    count_in_page += 1
+                    page_items += 1
             except Exception:
                 continue
 
-        print(f"  - [{cat_url[:45]}...] -> {count_in_page}개 상품 수집")
-        time.sleep(0.1)
+        print(f"  - [{p}페이지] {page_items}개 상품 수집 완료 (누적: {len(products)}개)")
+
+        # 3페이지 연속으로 상품이 나오지 않으면 마지막 페이지로 판단하여 탐색 종료
+        if page_items == 0:
+            empty_page_count += 1
+            if empty_page_count >= 3:
+                break
+        else:
+            empty_page_count = 0
+
+        time.sleep(0.05)
 
     return products
 
 def main():
-    print("🚀 쇼핑몰 수집 시작...")
+    print("🚀 쇼핑몰 모니터링 시작...")
     current_data = scrape_current_products()
     print(f"📦 총 {len(current_data)}개 상품 수집 완료.")
 
-    # 안전장치: 수집된 상품이 0개면 잘못된 수집이므로 저장하지 않고 종료
+    # 수집 실패 방지 안전장치
     if len(current_data) == 0:
-        print("❌ 상품이 수집되지 않았습니다. 사이트 구조 또는 URL 접속을 점검해주세요.")
+        print("❌ 상품을 하나도 수집하지 못했습니다. 사이트 점검이 필요합니다.")
         return
 
     state_file = "state.json"
@@ -149,19 +129,19 @@ def main():
         except Exception as e:
             print(f"⚠️ 기존 state.json 읽기 오류: {e}")
 
-    # 최초 실행인 경우 (또는 빈 데이터였던 경우)
+    # 최초 실행인 경우
     if not previous_data:
-        print("🎉 최초 실행: 현재 수집된 데이터로 초기 등록을 진행합니다.")
+        print("🎉 최초 등록 진행 중...")
         with open(state_file, "w", encoding="utf-8") as f:
             json.dump(current_data, f, ensure_ascii=False, indent=2)
             
         send_notification(
             "🔔 [모니터링 시스템 개설]",
-            f"전체 쇼핑몰 총 {len(current_data)}개 상품 데이터 최초 등록 완료!\n토픽: {NTFY_TOPIC}"
+            f"MBS Corporation 전체 {len(current_data)}개 상품 데이터 최초 등록 완료!\n토픽: {NTFY_TOPIC}"
         )
         return
 
-    # 변동사항 확인
+    # 변동 사항 확인
     changes = []
     for name, info in current_data.items():
         if name in previous_data:
