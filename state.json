@@ -36,12 +36,12 @@
     "sold_out": false
   },
   "유니버셜 TLR 실란트 80ml": {
-    "price": "16,000원",
+    "price": "10,000원",
     "sold_out": false
   },
   "유니버셜 TLR 실란트 150ml": {
     "price": "21,000원",
-    "sold_out": false
+    "sold_out": true
   },
   "유니버셜 TLR 실란트 250ml": {
     "price": "26,000원",
