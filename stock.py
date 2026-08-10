@@ -17,11 +17,13 @@ HEADERS = {
     "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8"
 }
 
-EXCLUDE_NAMES = {
+# 🚫 제외할 UI 및 버튼 관련 키워드 (부분 일치 검사)
+EXCLUDE_KEYWORDS = [
     "SOLD OUT", "SOLDOUT", "품절", "NEW", "BEST", "HOT",
     "로그인", "장바구니", "마이페이지", "1:1문의", "전체상품", "카테고리",
-    "구매하기", "공지사항", "이벤트", "자세히보기", "메인페이지"
-}
+    "구매하기", "공지사항", "이벤트", "자세히보기", "메인페이지",
+    "스펙비교", "비교", "옵션선택", "관심상품", "선택"
+]
 
 def send_notification(title, message, priority="default"):
     """ntfy 알림 전송"""
@@ -43,7 +45,7 @@ def clean_text(text):
     return " ".join(text.split()).strip()
 
 def get_all_category_urls():
-    """사이트 메뉴에서 모든 카테고리 URL 자동 추출"""
+    """사이트 메뉴에서 모든 카테고리 URL 자동 추출 (정렬하여 순서 고정)"""
     category_urls = set()
     category_urls.add(DEFAULT_CATEGORY_URL)
 
@@ -61,7 +63,8 @@ def get_all_category_urls():
     except Exception as e:
         print(f"⚠️ 카테고리 자동 추출 중 오류 발생 (기본 URL로 진행): {e}")
 
-    return list(category_urls)
+    # 📌 sorted()를 적용해 매 실행 시 카테고리 방문 순서를 100% 동일하게 고정
+    return sorted(list(category_urls))
 
 def scrape_current_products():
     products = {}
@@ -81,13 +84,19 @@ def scrape_current_products():
             detail_links = soup.find_all('a', href=lambda h: h and 'prod_detail' in h)
 
             for a in detail_links:
+                href = a.get('href', '')
+                
+                # 비교하기/스펙 관련 특수 링크 제외
+                if "compare" in href.lower() or "spec" in href.lower():
+                    continue
+
                 card = a.find_parent(['li', 'div', 'tr', 'td']) or a
                 raw_text = clean_text(card.text)
                 
                 if not raw_text or len(raw_text) < 2:
                     continue
 
-                # 1. 상품명 추출
+                # 1. 상품명 추출 및 정밀 제외 검사
                 img = card.find('img')
                 img_alt = img.get('alt', '').strip() if img else ""
 
@@ -95,24 +104,26 @@ def scrape_current_products():
                 possible_name = ""
                 for line in lines:
                     line_clean = clean_text(line)
-                    if line_clean in EXCLUDE_NAMES or re.search(r'[\d,]+\s*원', line_clean):
+                    # 제외 키워드가 부분적으로라도 포함되어 있으면 스킵
+                    if any(kw in line_clean for kw in EXCLUDE_KEYWORDS) or re.search(r'[\d,]+\s*원', line_clean):
                         continue
                     if len(line_clean) >= 2:
                         possible_name = line_clean
                         break
 
                 if not possible_name and img_alt:
-                    possible_name = img_alt
+                    if not any(kw in img_alt for kw in EXCLUDE_KEYWORDS):
+                        possible_name = img_alt
 
-                if not possible_name or possible_name in EXCLUDE_NAMES:
+                if not possible_name:
                     continue
 
                 name = possible_name
-                for ex in EXCLUDE_NAMES:
+                for ex in EXCLUDE_KEYWORDS:
                     name = name.replace(ex, "")
                 name = name.strip(".-_[]() ")
 
-                if len(name) < 2:
+                if len(name) < 2 or any(kw in name for kw in EXCLUDE_KEYWORDS):
                     continue
 
                 # 2. 가격 추출
@@ -139,6 +150,7 @@ def scrape_current_products():
                 if "품절" in price or "sold out" in price.lower():
                     is_sold_out = True
 
+                # 📌 최초 탐색된 카테고리의 고정 데이터를 우선하여 수집 (값 튐 방지)
                 if name not in products:
                     products[name] = {
                         "price": price,
@@ -174,15 +186,17 @@ def main():
         except Exception as e:
             print(f"⚠️ state.json 읽기 에러: {e}")
 
-    # state.json 파일이 아예 없을 때만 초기 등록 진행
-    if not previous_data:
-        print("🎉 전체 카테고리 데이터 통합 초기 등록 중...")
+    # state.json 파일이 없거나 스펙비교 오진 데이터가 껴있는 경우 정비
+    has_invalid_data = any("스펙" in key or "비교" in key for key in previous_data.keys()) if previous_data else False
+
+    if not previous_data or has_invalid_data:
+        print("🎉 기준 데이터 깔끔하게 정비 및 재등록 중...")
         with open(state_file, "w", encoding="utf-8") as f:
             json.dump(current_data, f, ensure_ascii=False, indent=2)
 
         send_notification(
-            "🔔 [MBS 전체 카테고리 모니터링 개설]",
-            f"모든 카테고리 자동 수집 완료!\n총 {len(current_data)}개 상품 데이터 등록 완료."
+            "🔔 [MBS 모니터링 정밀 재개설]",
+            f"오진 요소 제거 완료!\n총 {len(current_data)}개 상품 데이터 고정 등록 완료."
         )
         return
 
