@@ -1023,6 +1023,10 @@
     "price": "3,040,000원",
     "sold_out": false
   },
+  "ARC 1100 DICUT® WHITE LTD WTS": {
+    "price": "4,940,000원",
+    "sold_out": false
+  },
   "370 클래식 트랙 뒤 10/120": {
     "price": "185,000원",
     "sold_out": false
@@ -1144,10 +1148,6 @@
     "sold_out": false
   },
   "240 3 DEC 110/15 앞": {
-    "price": "320,000원",
-    "sold_out": false
-  },
-  "240 센터락 앞 15/110": {
     "price": "320,000원",
     "sold_out": false
   },
@@ -3001,6 +3001,10 @@
   },
   "REMOTE LEVER TWO IN ONE": {
     "price": "95,000원",
+    "sold_out": false
+  },
+  "240 센터락 앞 15/110": {
+    "price": "320,000원",
     "sold_out": false
   },
   "허브 스타라쳇 키트 54T": {
