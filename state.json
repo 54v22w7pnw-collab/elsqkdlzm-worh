@@ -911,6 +911,10 @@
     "price": "6,000원",
     "sold_out": false
   },
+  "ARC 1100 DICUT® WHITE LTD WTS": {
+    "price": "4,940,000원",
+    "sold_out": false
+  },
   "ARC 1100 SPLINE® CS DB 38 WTS": {
     "price": "5,630,000원",
     "sold_out": false
@@ -1023,8 +1027,12 @@
     "price": "3,040,000원",
     "sold_out": false
   },
-  "ARC 1100 DICUT® WHITE LTD WTS": {
-    "price": "4,940,000원",
+  "GRC 1100 DICUT®": {
+    "price": "4,600,000원",
+    "sold_out": false
+  },
+  "TRC 1400 DICUT®": {
+    "price": "3,800,000원",
     "sold_out": false
   },
   "370 클래식 트랙 뒤 10/120": {
@@ -1141,14 +1149,6 @@
   },
   "시마노 MS 12/142/48": {
     "price": "330,000원",
-    "sold_out": false
-  },
-  "240 앞 5/100": {
-    "price": "320,000원",
-    "sold_out": false
-  },
-  "240 3 DEC 110/15 앞": {
-    "price": "320,000원",
     "sold_out": false
   },
   "Smart Swim 2 Pro": {
@@ -3003,6 +3003,14 @@
     "price": "95,000원",
     "sold_out": false
   },
+  "240 앞 5/100": {
+    "price": "320,000원",
+    "sold_out": false
+  },
+  "240 3 DEC 110/15 앞": {
+    "price": "320,000원",
+    "sold_out": false
+  },
   "240 센터락 앞 15/110": {
     "price": "320,000원",
     "sold_out": false
@@ -3196,7 +3204,7 @@
     "sold_out": false
   },
   "튜브리스 림 테이프 (구형": {
-    "price": "16,000원",
+    "price": "22,000원",
     "sold_out": false
   },
   "XR 391 29": {
