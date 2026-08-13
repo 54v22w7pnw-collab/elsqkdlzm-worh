@@ -1027,6 +1027,10 @@
     "price": "3,040,000원",
     "sold_out": false
   },
+  "GRC 1400 DICUT®": {
+    "price": "3,800,000원",
+    "sold_out": false
+  },
   "GRC 1100 DICUT®": {
     "price": "4,600,000원",
     "sold_out": false
@@ -1144,10 +1148,6 @@
     "sold_out": false
   },
   "스램 XD 12/142/48": {
-    "price": "330,000원",
-    "sold_out": false
-  },
-  "시마노 MS 12/142/48": {
     "price": "330,000원",
     "sold_out": false
   },
@@ -3001,6 +3001,10 @@
   },
   "REMOTE LEVER TWO IN ONE": {
     "price": "95,000원",
+    "sold_out": false
+  },
+  "시마노 MS 12/142/48": {
+    "price": "330,000원",
     "sold_out": false
   },
   "240 앞 5/100": {
