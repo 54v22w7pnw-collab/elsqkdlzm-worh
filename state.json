@@ -599,6 +599,10 @@
     "price": "68,000원",
     "sold_out": false
   },
+  "스타일리시 랩 에스닉": {
+    "price": "50,000원",
+    "sold_out": false
+  },
   "폴리터치 코스믹 헤이즈 시리즈": {
     "price": "50,000원",
     "sold_out": false
@@ -1027,6 +1031,10 @@
     "price": "3,040,000원",
     "sold_out": false
   },
+  "X 1900 29/25 Boost": {
+    "price": "930,000원",
+    "sold_out": false
+  },
   "GRC 1400 DICUT®": {
     "price": "3,800,000원",
     "sold_out": false
@@ -1069,10 +1077,6 @@
   },
   "디티스위스 휠 백 (기본형": {
     "price": "28,800원",
-    "sold_out": false
-  },
-  "X 1900 29/25 Boost": {
-    "price": "930,000원",
     "sold_out": false
   },
   "ER 1400 DICUT® DB 21": {
@@ -2211,6 +2215,10 @@
     "price": "40,000원",
     "sold_out": false
   },
+  "애리슨 일반 튜브(20인치용": {
+    "price": "8,000원",
+    "sold_out": false
+  },
   "ZOOM SPS-442": {
     "price": "100,000원",
     "sold_out": false
@@ -2221,10 +2229,6 @@
   },
   "판타시아 슬리퍼": {
     "price": "24,000원",
-    "sold_out": false
-  },
-  "Air Seat 35": {
-    "price": "79,000원",
     "sold_out": false
   },
   "코르사 프로 핑크 에디션": {
@@ -2497,10 +2501,6 @@
   },
   "AERO ONE 프레임셋": {
     "price": "17,900,000원",
-    "sold_out": false
-  },
-  "애리슨 일반 튜브(20인치용": {
-    "price": "8,000원",
     "sold_out": false
   },
   "XLR8(20인치용": {
@@ -2997,6 +2997,10 @@
   },
   "B.B PT-6635SMCB 스램 세라믹": {
     "price": "95,000원",
+    "sold_out": false
+  },
+  "Air Seat 35": {
+    "price": "79,000원",
     "sold_out": false
   },
   "REMOTE LEVER TWO IN ONE": {
